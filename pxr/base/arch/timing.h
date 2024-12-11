@@ -25,6 +25,8 @@
 #include <mach/mach_time.h>
 #elif defined(ARCH_OS_WINDOWS)
 #include <intrin.h>
+#elif defined(ARCH_OS_LINUX) && defined(ARCH_CPU_POWER)
+#include <chrono>
 #endif
 
 #include <algorithm>
@@ -54,6 +56,10 @@ ArchGetTickTime()
     uint64_t result;
     __asm __volatile("mrs	%0, CNTVCT_EL0" : "=&r" (result));
     return result;
+#elif defined (ARCH_CPU_POWER)
+    return std::chrono::high_resolution_clock::now()
+        .time_since_epoch().
+        count();
 #else
 #error Unknown architecture.
 #endif
@@ -95,6 +101,10 @@ ArchGetStartTickTime()
         // rdtsc writes rdx
         // shl modifies cc flags
         : "rdx", "cc");
+#elif defined (ARCH_CPU_POWER)
+    t= std::chrono::high_resolution_clock::now()
+        .time_since_epoch().
+        count();
 #else
 #error "Unsupported architecture."
 #endif
@@ -134,6 +144,10 @@ ArchGetStopTickTime()
         // rdtscp writes rcx & rdx
         // shl modifies cc flags
         : "rcx", "rdx", "cc");
+#elif defined (ARCH_CPU_POWER)
+    t= std::chrono::high_resolution_clock::now()
+        .time_since_epoch().
+        count();
 #else
 #error "Unsupported architecture."
 #endif

@@ -625,6 +625,19 @@ nonLockingLinux__execve (const char *file,
         : "0" (file), "c" (argv), "d" (envp)
         : "memory", "cc", "r11"
     );
+#elif defined(ARCH_CPU_POWER) && defined(ARCH_BITS_64)
+    register long __num_execve asm ("r0") = 221;
+    register long __file_result asm ("r3") = (long)file;
+    register char* const* __argv asm ("r4") = argv;
+    register char* const* __envp asm ("r5") = envp;
+
+    __asm__ __volatile__ (
+        "       sc\n"
+        : "=r" (__file_result)
+        : "r" (__argv), "r" (__envp), "r" (__num_execve)
+        : "memory", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "cr0", "ctr"
+    );
+    result = __file_result;
 #else
 #error Unknown architecture
 #endif
